@@ -2,10 +2,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class LeNet(nn.Module):
+class LeNet(nn.Module):        #继承nn.Module 类
     def __init__(self):
-        super(LeNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 16, 5)
+        super(LeNet, self).__init__()     # 继承的初始化（一般都会这么做）
+        self.conv1 = nn.Conv2d(3, 16, 5)  # 通道数3，16个 5*5的卷积核
         self.pool1 = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(16, 32, 5)
         self.pool2 = nn.MaxPool2d(2, 2)
@@ -13,6 +13,8 @@ class LeNet(nn.Module):
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
+    # 输出的矩阵尺寸大小：N=(W - F + 2P) / S + 1
+    # (图片大小 - 卷积核大小 + 2*边幅) / 步长 + 1
     def forward(self, x):
         x = F.relu(self.conv1(x))    # input(3, 32, 32) output(16, 28, 28)
         x = self.pool1(x)            # output(16, 14, 14)
