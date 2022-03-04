@@ -7,26 +7,32 @@ import torchvision.transforms as transforms
 
 
 def main():
+    # 图像预处理
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # 50000张训练图片
     # 第一次使用时要将download设置为True才会自动去下载数据集
+    # torchvision.datasets还有很多其他数据集，可以多尝试
     train_set = torchvision.datasets.CIFAR10(root='./data', train=True,
                                              download=False, transform=transform)
+
+    # 每次拿出36张图片训练
+    # shuffle=True 随机提取数据
+    # num_workers 线程数
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=36,
                                                shuffle=True, num_workers=0)
 
     # 10000张验证图片
     # 第一次使用时要将download设置为True才会自动去下载数据集
     val_set = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                           download=False, transform=transform)
+                                           download=True, transform=transform)
     val_loader = torch.utils.data.DataLoader(val_set, batch_size=5000,
                                              shuffle=False, num_workers=0)
-    val_data_iter = iter(val_loader)
-    val_image, val_label = val_data_iter.next()
-    
+    val_data_iter = iter(val_loader)  # 可迭代的迭代器
+    val_image, val_label = val_data_iter.next()  # 有迭代器，next()就能获取到一批数据
+
     # classes = ('plane', 'car', 'bird', 'cat',
     #            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -51,7 +57,7 @@ def main():
 
             # print statistics
             running_loss += loss.item()
-            if step % 500 == 499:    # print every 500 mini-batches
+            if step % 500 == 499:  # print every 500 mini-batches
                 with torch.no_grad():
                     outputs = net(val_image)  # [batch, 10]
                     predict_y = torch.max(outputs, dim=1)[1]

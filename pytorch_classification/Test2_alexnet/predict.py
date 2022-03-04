@@ -1,10 +1,10 @@
-import os
 import json
+import os
 
+import matplotlib.pyplot as plt
 import torch
 from PIL import Image
 from torchvision import transforms
-import matplotlib.pyplot as plt
 
 from model import AlexNet
 
@@ -18,7 +18,7 @@ def main():
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # load image
-    img_path = "../tulip.jpg"
+    img_path = "tulip3.jpg"
     assert os.path.exists(img_path), "file: '{}' dose not exist.".format(img_path)
     img = Image.open(img_path)
 

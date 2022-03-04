@@ -23,6 +23,7 @@ def main():
     origin_flower_path = os.path.join(data_root, "flower_photos")
     assert os.path.exists(origin_flower_path), "path '{}' does not exist.".format(origin_flower_path)
 
+    # 集合
     flower_class = [cla for cla in os.listdir(origin_flower_path)
                     if os.path.isdir(os.path.join(origin_flower_path, cla))]
 
