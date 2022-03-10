@@ -1,6 +1,8 @@
 from collections import OrderedDict
 
 from typing import Dict
+
+import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
 from .backbone import resnet50, resnet101
@@ -36,6 +38,8 @@ class IntermediateLayerGetter(nn.ModuleDict):
             raise ValueError("return_layers are not present in model")
         orig_return_layers = return_layers
         return_layers = {str(k): str(v) for k, v in return_layers.items()}
+
+        # 重新构建backbone，将没有使用到的模块全部删掉
         layers = OrderedDict()
         for name, module in model.named_children():
             layers[name] = module
@@ -114,17 +118,21 @@ class FCNHead(nn.Sequential):
         super(FCNHead, self).__init__(*layers)
 
 
-def fcn_resnet50(aux, num_classes=21):
+def fcn_resnet50(aux, num_classes=21, pretrain_backbone=False):
+    # 'resnet50_imagenet': 'https://download.pytorch.org/models/resnet50-0676ba61.pth'
     # 'fcn_resnet50_coco': 'https://download.pytorch.org/models/fcn_resnet50_coco-1167a1af.pth'
     backbone = resnet50(replace_stride_with_dilation=[False, True, True])
-    out_layer = 'layer4'
+
+    if pretrain_backbone:
+        # 载入resnet50 backbone预训练权重
+        backbone.load_state_dict(torch.load("resnet50.pth", map_location='cpu'))
+
     out_inplanes = 2048
-    aux_layer = 'layer3'
     aux_inplanes = 1024
 
-    return_layers = {out_layer: 'out'}
+    return_layers = {'layer4': 'out'}
     if aux:
-        return_layers[aux_layer] = 'aux'
+        return_layers['layer3'] = 'aux'
     backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
 
     aux_classifier = None
@@ -139,17 +147,21 @@ def fcn_resnet50(aux, num_classes=21):
     return model
 
 
-def fcn_resnet101(aux, num_classes=21):
+def fcn_resnet101(aux, num_classes=21, pretrain_backbone=False):
+    # 'resnet101_imagenet': 'https://download.pytorch.org/models/resnet101-63fe2227.pth'
     # 'fcn_resnet101_coco': 'https://download.pytorch.org/models/fcn_resnet101_coco-7ecb50ca.pth'
     backbone = resnet101(replace_stride_with_dilation=[False, True, True])
-    out_layer = 'layer4'
+
+    if pretrain_backbone:
+        # 载入resnet101 backbone预训练权重
+        backbone.load_state_dict(torch.load("resnet101.pth", map_location='cpu'))
+
     out_inplanes = 2048
-    aux_layer = 'layer3'
     aux_inplanes = 1024
 
-    return_layers = {out_layer: 'out'}
+    return_layers = {'layer4': 'out'}
     if aux:
-        return_layers[aux_layer] = 'aux'
+        return_layers['layer3'] = 'aux'
     backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
 
     aux_classifier = None
