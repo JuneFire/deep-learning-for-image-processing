@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 
 import torch
 import torch.nn as nn
@@ -7,7 +8,10 @@ import torch.optim as optim
 from torchvision import transforms, datasets
 from tqdm import tqdm
 
-from model import resnet34
+# from model import resnet34
+from model import resnext50_32x4d
+#import torchvision.models.resnet       #官方源码地址
+
 
 
 def main():
@@ -19,8 +23,8 @@ def main():
                                      transforms.RandomHorizontalFlip(),
                                      transforms.ToTensor(),
                                      transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
-        "val": transforms.Compose([transforms.Resize(256),
-                                   transforms.CenterCrop(224),
+        "val": transforms.Compose([transforms.Resize(256),      # 最小边长缩放到256
+                                   transforms.CenterCrop(224),  # 中心裁剪
                                    transforms.ToTensor(),
                                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
 
@@ -57,18 +61,19 @@ def main():
     print("using {} images for training, {} images for validation.".format(train_num,
                                                                            val_num))
     
-    net = resnet34()
-    # load pretrain weights
+    net = resnext50_32x4d()   # 网络模型， 原来是 resnet34()
+    # load pretrain weights  迁移学习
     # download url: https://download.pytorch.org/models/resnet34-333f7ec4.pth
-    model_weight_path = "./resnet34-pre.pth"
+    model_weight_path = "./resnext50_32x4d.pth"   # 预训练模型  原来的是resnet34-pre.pth、resnext50_32x4d.pth
     assert os.path.exists(model_weight_path), "file {} does not exist.".format(model_weight_path)
     net.load_state_dict(torch.load(model_weight_path, map_location=device))
-    # for param in net.parameters():
-    #     param.requires_grad = False
+    for param in net.parameters():   # 冻结除最后一层全连接外的权重（冻结所有网络结构（原代码是不需要的））
+        param.requires_grad = False
 
     # change fc layer structure
     in_channel = net.fc.in_features
     net.fc = nn.Linear(in_channel, 5)
+
     net.to(device)
 
     # define loss function
@@ -80,7 +85,7 @@ def main():
 
     epochs = 3
     best_acc = 0.0
-    save_path = './resNet34.pth'
+    save_path = './resNext50.pth'   # resNet34.pth 、 resNext50.pth
     train_steps = len(train_loader)
     for epoch in range(epochs):
         # train
@@ -103,7 +108,7 @@ def main():
                                                                      loss)
 
         # validate
-        net.eval()
+        net.eval()  # 关闭BN方法
         acc = 0.0  # accumulate accurate number / epoch
         with torch.no_grad():
             val_bar = tqdm(validate_loader, file=sys.stdout)

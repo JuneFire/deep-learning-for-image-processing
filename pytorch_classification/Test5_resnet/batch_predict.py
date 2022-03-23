@@ -7,6 +7,9 @@ from torchvision import transforms
 
 from model import resnet34
 
+'''
+批量图片预测
+'''
 
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -19,7 +22,7 @@ def main():
 
     # load image
     # 指向需要遍历预测的图像文件夹
-    imgs_root = "/data/imgs"
+    imgs_root = "../data/imgs"
     assert os.path.exists(imgs_root), f"file: '{imgs_root}' dose not exist."
     # 读取指定文件夹下所有jpg图像路径
     img_path_list = [os.path.join(imgs_root, i) for i in os.listdir(imgs_root) if i.endswith(".jpg")]
@@ -41,7 +44,7 @@ def main():
 
     # prediction
     model.eval()
-    batch_size = 8  # 每次预测时将多少张图片打包成一个batch
+    batch_size = 5  # 每次预测时将多少张图片打包成一个batch
     with torch.no_grad():
         for ids in range(0, len(img_path_list) // batch_size):
             img_list = []
