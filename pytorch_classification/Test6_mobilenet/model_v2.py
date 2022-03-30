@@ -32,10 +32,10 @@ class InvertedResidual(nn.Module):
     def __init__(self, in_channel, out_channel, stride, expand_ratio):
         super(InvertedResidual, self).__init__()
         hidden_channel = in_channel * expand_ratio
-        self.use_shortcut = stride == 1 and in_channel == out_channel
+        self.use_shortcut = stride == 1 and in_channel == out_channel  # 捷径分支
 
         layers = []
-        if expand_ratio != 1:
+        if expand_ratio != 1:  # 扩展因子
             # 1x1 pointwise conv
             layers.append(ConvBNReLU(in_channel, hidden_channel, kernel_size=1))
         layers.extend([
@@ -48,7 +48,7 @@ class InvertedResidual(nn.Module):
 
         self.conv = nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x):   # x：特征矩阵
         if self.use_shortcut:
             return x + self.conv(x)
         else:
@@ -56,14 +56,14 @@ class InvertedResidual(nn.Module):
 
 
 class MobileNetV2(nn.Module):
-    def __init__(self, num_classes=1000, alpha=1.0, round_nearest=8):
+    def __init__(self, num_classes=1000, alpha=1.0, round_nearest=8):  # alpha 卷积核个数的倍率
         super(MobileNetV2, self).__init__()
         block = InvertedResidual
-        input_channel = _make_divisible(32 * alpha, round_nearest)
+        input_channel = _make_divisible(32 * alpha, round_nearest)      #
         last_channel = _make_divisible(1280 * alpha, round_nearest)
 
         inverted_residual_setting = [
-            # t, c, n, s
+            # t 扩展因子, c 输出的channel, n是bottleneck的重复次数, s 步距
             [1, 16, 1, 1],
             [6, 24, 2, 2],
             [6, 32, 3, 2],
@@ -101,12 +101,12 @@ class MobileNetV2(nn.Module):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out')
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.BatchNorm2d):
+            elif isinstance(m, nn.BatchNorm2d):  # BN层则 方差为1，均值为0
                 nn.init.ones_(m.weight)
                 nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):  # 全连接层
+                nn.init.normal_(m.weight, 0, 0.01)  # 方差为1，均值为0.01的正态分布
+                nn.init.zeros_(m.bias)      # 偏置为0
 
     def forward(self, x):
         x = self.features(x)

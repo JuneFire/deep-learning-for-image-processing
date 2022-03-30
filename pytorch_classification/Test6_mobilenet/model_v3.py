@@ -42,7 +42,7 @@ class ConvBNActivation(nn.Sequential):
                                                          stride=stride,
                                                          padding=padding,
                                                          groups=groups,
-                                                         bias=False),
+                                                         bias=False),   # BN层不需要偏置
                                                norm_layer(out_planes),
                                                activation_layer(inplace=True))
 
@@ -55,7 +55,7 @@ class SqueezeExcitation(nn.Module):
         self.fc2 = nn.Conv2d(squeeze_c, input_c, 1)
 
     def forward(self, x: Tensor) -> Tensor:
-        scale = F.adaptive_avg_pool2d(x, output_size=(1, 1))
+        scale = F.adaptive_avg_pool2d(x, output_size=(1, 1))  # 自适应平均池化操作
         scale = self.fc1(scale)
         scale = F.relu(scale, inplace=True)
         scale = self.fc2(scale)
@@ -98,7 +98,7 @@ class InvertedResidual(nn.Module):
         self.use_res_connect = (cnf.stride == 1 and cnf.input_c == cnf.out_c)
 
         layers: List[nn.Module] = []
-        activation_layer = nn.Hardswish if cnf.use_hs else nn.ReLU
+        activation_layer = nn.Hardswish if cnf.use_hs else nn.ReLU   # 1.7以上的pyTorch版本才有该方法
 
         # expand
         if cnf.expanded_c != cnf.input_c:
@@ -162,6 +162,7 @@ class MobileNetV3(nn.Module):
 
         layers: List[nn.Module] = []
 
+        #  开始构建网络
         # building first layer
         firstconv_output_c = inverted_residual_setting[0].input_c
         layers.append(ConvBNActivation(3,
@@ -176,7 +177,7 @@ class MobileNetV3(nn.Module):
 
         # building last several layers
         lastconv_input_c = inverted_residual_setting[-1].out_c
-        lastconv_output_c = 6 * lastconv_input_c
+        lastconv_output_c = 6 * lastconv_input_c       # 6 * 160 = 960
         layers.append(ConvBNActivation(lastconv_input_c,
                                        lastconv_output_c,
                                        kernel_size=1,
@@ -185,8 +186,8 @@ class MobileNetV3(nn.Module):
         self.features = nn.Sequential(*layers)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(nn.Linear(lastconv_output_c, last_channel),
-                                        nn.Hardswish(inplace=True),
-                                        nn.Dropout(p=0.2, inplace=True),
+                                        nn.Hardswish(inplace=True),     # HS
+                                        nn.Dropout(p=0.2, inplace=True),    # 随机失活的比例为 0.2
                                         nn.Linear(last_channel, num_classes))
 
         # initial weights
@@ -229,7 +230,7 @@ def mobilenet_v3_large(num_classes: int = 1000,
             between C4 and C5 by 2. It is used to reduce the channel redundancy in the
             backbone for Detection and Segmentation.
     """
-    width_multi = 1.0
+    width_multi = 1.0      # 阿尔法参数
     bneck_conf = partial(InvertedResidualConfig, width_multi=width_multi)
     adjust_channels = partial(InvertedResidualConfig.adjust_channels, width_multi=width_multi)
 

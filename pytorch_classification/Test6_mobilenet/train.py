@@ -9,6 +9,9 @@ from torchvision import transforms, datasets
 from tqdm import tqdm
 
 from model_v2 import MobileNetV2
+from model_v3 import mobilenet_v3_large
+
+import torchvision.models.mobilenet
 
 
 def main():
@@ -61,19 +64,19 @@ def main():
                                                                            val_num))
 
     # create model
-    net = MobileNetV2(num_classes=5)
+    net = mobilenet_v3_large(num_classes=5)
 
     # load pretrain weights
     # download url: https://download.pytorch.org/models/mobilenet_v2-b0353104.pth
-    model_weight_path = "./mobilenet_v2.pth"
+    model_weight_path = "./mobilenet_v3_large.pth"    #权重文件
     assert os.path.exists(model_weight_path), "file {} dose not exist.".format(model_weight_path)
     pre_weights = torch.load(model_weight_path, map_location=device)
 
-    # delete classifier weights
+    # delete classifier weights  因为官网最后一层是1000类，而我们本地是5类，要删减
     pre_dict = {k: v for k, v in pre_weights.items() if net.state_dict()[k].numel() == v.numel()}
     missing_keys, unexpected_keys = net.load_state_dict(pre_dict, strict=False)
 
-    # freeze features weights
+    # freeze features weights       只训练最后两层全连接层，速度更快，准确率稍微低点
     for param in net.features.parameters():
         param.requires_grad = False
 
@@ -87,7 +90,7 @@ def main():
     optimizer = optim.Adam(params, lr=0.0001)
 
     best_acc = 0.0
-    save_path = './MobileNetV2.pth'
+    save_path = './MobileNetV3.pth'  # 模型保持路径
     train_steps = len(train_loader)
     for epoch in range(epochs):
         # train
