@@ -4,7 +4,9 @@ import torch
 from torch import Tensor
 import torch.nn as nn
 
-
+'''
+feature -> group
+'''
 def channel_shuffle(x: Tensor, groups: int) -> Tensor:
 
     batch_size, num_channels, height, width = x.size()

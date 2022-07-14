@@ -20,7 +20,7 @@ class LeNet(nn.Module):  # 继承nn.Module 类
 
     # 输出的矩阵尺寸大小：N=(W - F + 2P) / S + 1
     # (图片大小 - 卷积核大小 + 2*边幅) / 步长 + 1
-
+    # 前馈算预测值
     def forward(self, x):
         x = F.relu(self.conv1(x))  # input(3, 32, 32) output(16, 28, 28)  ： 16 - 为channel数，即输入的卷积核个数，即深度
         x = self.pool1(x)  # output(16, 14, 14)
